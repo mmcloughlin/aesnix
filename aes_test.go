@@ -113,3 +113,26 @@ func EncryptorBenchmark(b *testing.B, f Encryptor, blocks int) {
 		f(v.Rounds, &enc[0], &cipher[0], &plain[0])
 	}
 }
+
+func BenchmarkNomem(b *testing.B) {
+	cases := []struct {
+		F      func()
+		Blocks int
+	}{
+		{nomem2, 2},
+		{nomem4, 4},
+		{nomem6, 6},
+		{nomem8, 8},
+		{nomem10, 10},
+		{nomem12, 12},
+		{nomem14, 14},
+	}
+	for _, c := range cases {
+		b.Run(strconv.Itoa(c.Blocks), func(b *testing.B) {
+			b.SetBytes(16 * int64(c.Blocks))
+			for i := 0; i < b.N; i++ {
+				c.F()
+			}
+		})
+	}
+}

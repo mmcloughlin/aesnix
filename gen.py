@@ -1,18 +1,19 @@
 import sys
 
 
+DECL = '// func {name}(nr int, xk *uint32, dst, src *byte)'
+TEXT = u'TEXT \u00b7{name}(SB),NOSPLIT,$0'
 HEADER = (
-u'''
-// func {name}(nr int, xk *uint32, dst, src *byte)
-TEXT \u00b7{name}(SB),NOSPLIT,$0
-	MOVQ nr+0(FP), CX
+u'''	MOVQ nr+0(FP), CX
 	MOVQ xk+8(FP), AX
 	MOVQ dst+16(FP), DX
 	MOVQ src+24(FP), BX
 	MOVUPS 0(AX), {reg_key}''')
 
+
 def file_header():
     print '#include "textflag.h"'
+    print
 
 
 def func_name(n):
@@ -34,7 +35,8 @@ def generate(n):
         }
 
     # header
-    print HEADER.format(**params)
+    for tmpl in [DECL, TEXT, HEADER]:
+        print tmpl.format(**params)
 
     # load plain
     for i in xrange(n):
@@ -79,17 +81,42 @@ def generate(n):
 
     # return
     print '\tRET'
+    print
 
 
-def generate_file(sizes):
+def nomem(size):
+    """
+    nomem generates a function with the same AES-NI instructions required for
+    encrypting size blocks, but without any memory accesses at all.
+    """
+    rounds = 10
+    name = 'nomem{}'.format(size)
+    print TEXT.format(name=name)
+    for i in xrange(size):
+        for r in xrange(rounds-1):
+            print '\tAESENC X0, X0'
+        print '\tAESENCLAST X0, X0'
+    print '\tRET'
+    print
+
+
+GENERATORS = dict(
+        multiblock=generate,
+        nomem=nomem,
+        )
+
+
+def generate_file(sizes, method='multiblock'):
+    generator = GENERATORS[method]
     file_header()
     for size in sizes:
-        generate(size)
+        generator(size)
 
 
 def main(args):
-    sizes = map(int, args[1].split(','))
-    generate_file(sizes)
+    method = args[1]
+    sizes = map(int, args[2].split(','))
+    generate_file(sizes, method=method)
 
 
 if __name__ == '__main__':
