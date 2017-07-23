@@ -96,9 +96,9 @@ def nomem(size):
     k = 0
     for i in xrange(size):
         for r in xrange(rounds-1):
-            print '\tAESENC X{r}, X15'.format(r=(k%15))
+            print '\tAESENC X0, X{r}'.format(r=1+(k%15))
             k += 1
-        print '\tAESENCLAST X{r}, X15'.format(r=(k%15))
+        print '\tAESENCLAST X0, X{r}'.format(r=1+(k%15))
         k += 1
     print '\tRET'
     print
