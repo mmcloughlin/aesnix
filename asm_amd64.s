@@ -272,4 +272,3 @@ TEXT _expand_key_256b<>(SB),NOSPLIT,$0
 	MOVUPS X2, (BX)
 	ADDQ $16, BX
 	RET
-
