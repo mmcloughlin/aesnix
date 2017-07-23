@@ -85,14 +85,6 @@ def generate(n):
     print
 
 
-def rand_enc(inst='AESENC'):
-    print '\t{inst} X{i}, X{j}'.format(
-            inst=inst,
-            i=random.randrange(16),
-            j=random.randrange(16),
-            )
-
-
 def nomem(size):
     """
     nomem generates a function with the same AES-NI instructions required for
@@ -101,10 +93,13 @@ def nomem(size):
     rounds = 10
     name = 'nomem{}'.format(size)
     print TEXT.format(name=name)
+    k = 0
     for i in xrange(size):
         for r in xrange(rounds-1):
-            rand_enc()
-        rand_enc(inst='AESENCLAST')
+            print '\tAESENC X0, X{r}'.format(r=1+(k%15))
+            k += 1
+        print '\tAESENCLAST X0, X{r}'.format(r=1+(k%15))
+        k += 1
     print '\tRET'
     print
 

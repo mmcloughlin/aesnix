@@ -1,4 +1,4 @@
-all: asm_amd64.s multiblock_amd64.s RESULTS.md
+all: asm_amd64.s multiblock_amd64.s nomem_amd64.s
 
 RESULTS.md: aes_test.go
 	echo '```' > $@
