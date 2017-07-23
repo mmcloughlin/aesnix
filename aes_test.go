@@ -62,3 +62,37 @@ func TestMulti(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkSingle(b *testing.B) {
+	cipher := make([]byte, 16)
+	enc := make([]uint32, 4*(v.Rounds+1))
+	dec := make([]uint32, 4*(v.Rounds+1))
+	expandKeyAsm(v.Rounds, &v.Key[0], &enc[0], &dec[0])
+
+	b.SetBytes(16)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		encryptBlockAsm(v.Rounds, &enc[0], &cipher[0], &v.Plain[0])
+	}
+}
+
+func BenchmarkMulti(b *testing.B) {
+	const Blocks = 8
+
+	enc := make([]uint32, 4*(v.Rounds+1))
+	dec := make([]uint32, 4*(v.Rounds+1))
+	expandKeyAsm(v.Rounds, &v.Key[0], &enc[0], &dec[0])
+
+	plain := make([]byte, 16*Blocks)
+	for i := 0; i < Blocks; i++ {
+		copy(plain[16*i:], v.Plain)
+	}
+	cipher := make([]byte, 16*Blocks)
+
+	b.SetBytes(16 * Blocks)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		encryptBlocks8Asm(v.Rounds, &enc[0], &cipher[0], &plain[0])
+	}
+}
