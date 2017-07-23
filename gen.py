@@ -1,4 +1,5 @@
 import sys
+import random
 
 
 DECL = '// func {name}(nr int, xk *uint32, dst, src *byte)'
@@ -84,6 +85,14 @@ def generate(n):
     print
 
 
+def rand_enc(inst='AESENC'):
+    print '\t{inst} X{i}, X{j}'.format(
+            inst=inst,
+            i=random.randrange(16),
+            j=random.randrange(16),
+            )
+
+
 def nomem(size):
     """
     nomem generates a function with the same AES-NI instructions required for
@@ -94,8 +103,8 @@ def nomem(size):
     print TEXT.format(name=name)
     for i in xrange(size):
         for r in xrange(rounds-1):
-            print '\tAESENC X0, X0'
-        print '\tAESENCLAST X0, X0'
+            rand_enc()
+        rand_enc(inst='AESENCLAST')
     print '\tRET'
     print
 
