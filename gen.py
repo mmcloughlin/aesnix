@@ -2,8 +2,7 @@ import sys
 
 
 HEADER = (
-u'''#include "textflag.h"
-
+u'''
 // func {name}(nr int, xk *uint32, dst, src *byte)
 TEXT \u00b7{name}(SB),NOSPLIT,$0
 	MOVQ nr+0(FP), CX
@@ -11,6 +10,9 @@ TEXT \u00b7{name}(SB),NOSPLIT,$0
 	MOVQ dst+16(FP), DX
 	MOVQ src+24(FP), BX
 	MOVUPS 0(AX), {reg_key}''')
+
+def file_header():
+    print '#include "textflag.h"'
 
 
 def func_name(n):
@@ -79,9 +81,15 @@ def generate(n):
     print '\tRET'
 
 
+def generate_file(sizes):
+    file_header()
+    for size in sizes:
+        generate(size)
+
+
 def main(args):
-    n = int(args[1])
-    generate(n)
+    sizes = map(int, args[1].split(','))
+    generate_file(sizes)
 
 
 if __name__ == '__main__':

@@ -2,12 +2,21 @@ package aesasm
 
 import (
 	"bytes"
+	"strconv"
 	"testing"
 )
 
 func expandKeyAsm(nr int, key *byte, enc *uint32, dec *uint32)
 func encryptBlockAsm(nr int, xk *uint32, dst, src *byte)
+func encryptBlocks2Asm(nr int, xk *uint32, dst, src *byte)
+func encryptBlocks4Asm(nr int, xk *uint32, dst, src *byte)
+func encryptBlocks6Asm(nr int, xk *uint32, dst, src *byte)
 func encryptBlocks8Asm(nr int, xk *uint32, dst, src *byte)
+func encryptBlocks10Asm(nr int, xk *uint32, dst, src *byte)
+func encryptBlocks12Asm(nr int, xk *uint32, dst, src *byte)
+func encryptBlocks14Asm(nr int, xk *uint32, dst, src *byte)
+
+type Encryptor func(nr int, xk *uint32, dst, src *byte)
 
 var v = struct {
 	Rounds int
@@ -77,22 +86,40 @@ func BenchmarkSingle(b *testing.B) {
 }
 
 func BenchmarkMulti(b *testing.B) {
-	const Blocks = 8
+	cases := []struct {
+		Encryptor Encryptor
+		Blocks    int
+	}{
+		{encryptBlocks2Asm, 2},
+		{encryptBlocks4Asm, 4},
+		{encryptBlocks6Asm, 6},
+		{encryptBlocks8Asm, 8},
+		{encryptBlocks10Asm, 10},
+		{encryptBlocks12Asm, 12},
+		{encryptBlocks14Asm, 14},
+	}
+	for _, c := range cases {
+		b.Run(strconv.Itoa(c.Blocks), func(b *testing.B) {
+			EncryptorBenchmark(b, c.Encryptor, c.Blocks)
+		})
+	}
+}
 
+func EncryptorBenchmark(b *testing.B, f Encryptor, blocks int) {
 	enc := make([]uint32, 4*(v.Rounds+1))
 	dec := make([]uint32, 4*(v.Rounds+1))
 	expandKeyAsm(v.Rounds, &v.Key[0], &enc[0], &dec[0])
 
-	plain := make([]byte, 16*Blocks)
-	for i := 0; i < Blocks; i++ {
+	plain := make([]byte, 16*blocks)
+	for i := 0; i < blocks; i++ {
 		copy(plain[16*i:], v.Plain)
 	}
-	cipher := make([]byte, 16*Blocks)
+	cipher := make([]byte, 16*blocks)
 
-	b.SetBytes(16 * Blocks)
+	b.SetBytes(16 * int64(blocks))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		encryptBlocks8Asm(v.Rounds, &enc[0], &cipher[0], &plain[0])
+		f(v.Rounds, &enc[0], &cipher[0], &plain[0])
 	}
 }
