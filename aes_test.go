@@ -1,4 +1,4 @@
-package aesasm
+package aesnix
 
 import (
 	"bytes"

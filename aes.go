@@ -1,4 +1,4 @@
-package aesasm
+package aesnix
 
 func expandKeyAsm(nr int, key *byte, enc *uint32, dec *uint32)
 func encryptBlockAsm(nr int, xk *uint32, dst, src *byte)
