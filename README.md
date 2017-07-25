@@ -31,3 +31,5 @@ BenchmarkNomem/10-4 	1000000000	        32.0 ns/op	5005.75 MB/s
 BenchmarkNomem/12-4 	1000000000	        38.6 ns/op	4978.14 MB/s
 BenchmarkNomem/14-4 	1000000000	        44.9 ns/op	4989.37 MB/s
 ```
+
+See [results of some more in-depth tests](RESULTS.md).
