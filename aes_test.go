@@ -103,6 +103,7 @@ func EncryptorBenchmark(b *testing.B, f Encryptor, blocks int) {
 	plain := make([]byte, 16*blocks)
 	for i := 0; i < blocks; i++ {
 		copy(plain[16*i:], v.Plain)
+		plain[16*i] ^= byte(i)
 	}
 	cipher := make([]byte, 16*blocks)
 
