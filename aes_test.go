@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Encryptor func(nr int, xk *uint32, dst, src *byte)
@@ -69,9 +71,9 @@ func TestMulti(t *testing.T) {
 			encryptBlocks8Asm(v.Rounds, &enc[0], &cipher[0], &plain[0])
 
 			for i := 0; i < c.Blocks; i++ {
-				if !bytes.Equal(cipher[16*i:16*i+16], v.Cipher) {
-					t.Errorf("error on block %d", i)
-				}
+				t.Run("block "+strconv.Itoa(i), func(t *testing.T) {
+					assert.Equal(t, v.Cipher, cipher[16*i:16*i+16])
+				})
 			}
 		})
 	}
