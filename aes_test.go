@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Encryptor func(nr int, xk *uint32, dst, src *byte)
@@ -40,25 +42,40 @@ func TestSingle(t *testing.T) {
 	}
 }
 
-func TestMulti(t *testing.T) {
-	const Blocks = 8
+var cases = []struct {
+	Encryptor Encryptor
+	Blocks    int
+}{
+	{encryptBlocks2Asm, 2},
+	{encryptBlocks4Asm, 4},
+	{encryptBlocks6Asm, 6},
+	{encryptBlocks8Asm, 8},
+	{encryptBlocks10Asm, 10},
+	{encryptBlocks12Asm, 12},
+	{encryptBlocks14Asm, 14},
+}
 
+func TestMulti(t *testing.T) {
 	enc := make([]uint32, 4*(v.Rounds+1))
 	dec := make([]uint32, 4*(v.Rounds+1))
 	expandKeyAsm(v.Rounds, &v.Key[0], &enc[0], &dec[0])
 
-	plain := make([]byte, 16*Blocks)
-	for i := 0; i < Blocks; i++ {
-		copy(plain[16*i:], v.Plain)
-	}
+	for _, c := range cases {
+		t.Run(strconv.Itoa(c.Blocks), func(t *testing.T) {
+			plain := make([]byte, 16*c.Blocks)
+			for i := 0; i < c.Blocks; i++ {
+				copy(plain[16*i:], v.Plain)
+			}
 
-	cipher := make([]byte, 16*Blocks)
-	encryptBlocks8Asm(v.Rounds, &enc[0], &cipher[0], &plain[0])
+			cipher := make([]byte, 16*c.Blocks)
+			c.Encryptor(v.Rounds, &enc[0], &cipher[0], &plain[0])
 
-	for i := 0; i < Blocks; i++ {
-		if !bytes.Equal(cipher[16*i:16*i+16], v.Cipher) {
-			t.Errorf("error on block %d", i)
-		}
+			for i := 0; i < c.Blocks; i++ {
+				t.Run("block "+strconv.Itoa(i), func(t *testing.T) {
+					assert.Equal(t, v.Cipher, cipher[16*i:16*i+16])
+				})
+			}
+		})
 	}
 }
 
@@ -76,18 +93,6 @@ func BenchmarkSingle(b *testing.B) {
 }
 
 func BenchmarkMulti(b *testing.B) {
-	cases := []struct {
-		Encryptor Encryptor
-		Blocks    int
-	}{
-		{encryptBlocks2Asm, 2},
-		{encryptBlocks4Asm, 4},
-		{encryptBlocks6Asm, 6},
-		{encryptBlocks8Asm, 8},
-		{encryptBlocks10Asm, 10},
-		{encryptBlocks12Asm, 12},
-		{encryptBlocks14Asm, 14},
-	}
 	for _, c := range cases {
 		b.Run(strconv.Itoa(c.Blocks), func(b *testing.B) {
 			EncryptorBenchmark(b, c.Encryptor, c.Blocks)
@@ -103,6 +108,7 @@ func EncryptorBenchmark(b *testing.B, f Encryptor, blocks int) {
 	plain := make([]byte, 16*blocks)
 	for i := 0; i < blocks; i++ {
 		copy(plain[16*i:], v.Plain)
+		plain[16*i] ^= byte(i)
 	}
 	cipher := make([]byte, 16*blocks)
 
