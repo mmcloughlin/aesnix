@@ -68,7 +68,7 @@ func TestMulti(t *testing.T) {
 			}
 
 			cipher := make([]byte, 16*c.Blocks)
-			encryptBlocks8Asm(v.Rounds, &enc[0], &cipher[0], &plain[0])
+			c.Encryptor(v.Rounds, &enc[0], &cipher[0], &plain[0])
 
 			for i := 0; i < c.Blocks; i++ {
 				t.Run("block "+strconv.Itoa(i), func(t *testing.T) {
